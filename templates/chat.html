@@ -1,0 +1,85 @@
+{% extends "template.html" %}
+{% block content %} 
+<style>
+    .wrapper {
+        padding: 20px;
+        margin: 50px;
+        width: 50vw;
+        border: 3px solid black;
+        border-radius: 8px;
+        background-color: #bedbbb;
+    }
+    .h1 {
+        text-align: center;
+        color: white;
+    }
+    .message-box {
+        height: 500px;
+        border: 3px solid black;
+        border-radius: 8px;
+        padding: 5px;
+        background-color: #ebebeb;
+    }
+    .form_inputs {
+        padding: 5px;
+        margin: 5px;
+    }
+    .button_container {
+        padding: 15px;
+        text-align: center;
+    }
+    .input_ {
+        border: 1px solid black;
+        border-radius: 8px;
+    }
+</style>
+<h1 > Room {{ room }} </h1>
+<div class="message-box" id="messages"></div>
+    <form id="message_input" class="form_inputs">
+        <input type="text" value="Enter your message here" class="form-control input_" id="input">
+        <div class="button_container">
+            <button type="submit" class="btn btn-danger btn-lg">Send Message</button>
+        </div>
+    </form>
+    </body>      
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+<script>
+    const socket = io.connect("http://127.0.0.1:5001"); 
+
+    socket.on("connect", () => {
+        socket.emit("join_room", {
+            username: "{{ username }}",
+            room: "{{ room }}"
+        });
+
+        let input = document.getElementById("input");
+
+        document.getElementById("message_input").onsubmit = event => {
+            event.preventDefault();
+            let message = input.value.trim();
+            if (message.length) {
+                socket.emit("send_message", {
+                    username: "{{ username }}",
+                    room: "{{ room }}",
+                    message: message
+                })
+            }
+            input.value = "";
+        }
+    });
+
+    window.onbeforeunload = () => {
+        socket.emit("exit_room", {
+            username: "{{ username }}",
+            room: "{{ room }}"
+        })
+    };
+
+    socket.on("receive_message", data => {
+        const newMessage = document.createElement("div");
+        newMessage.innerHTML = `<b>${data.username}:&nbsp;</b> ${data.message}`;
+        document.getElementById("messages").appendChild(newMessage);
+    });
+</script>
+{% endblock %}
